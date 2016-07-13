@@ -36,7 +36,7 @@ public slots:
 
 private slots:
     void on_pbConnect_clicked();
-    void on_pushButton_clicked();
+    void on_pbDumpData_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -44,7 +44,7 @@ private:
     QTimer timer;
     qreal t;
     QByteArray *dataReceived;
-    bool configurado;
+    bool config;
     quint8 num_signals;
     quint8 num_it;
 };

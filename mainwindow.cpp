@@ -12,23 +12,23 @@ MainWindow::MainWindow(QWidget *parent) :
     fillParameters();
     fillPorts();
 
-    //  Inicialización del graficador
-//    ui->graph->setBackground(QBrush(QColor(48,47,47)));
+    //  Plotter Initialization
+    //    ui->ploteer->setBackground(QBrush(QColor(48,47,47)));
 
-    ui->graph->xAxis->setTickLabelType(QCPAxis::ltDateTime);
-    ui->graph->xAxis->setDateTimeFormat("hh:mm:ss");
-    ui->graph->xAxis->setAutoTickStep(false);
-    ui->graph->xAxis->setTickStep(1);
-    ui->graph->axisRect()->setupFullAxesBox();
+    ui->plotter->xAxis->setTickLabelType(QCPAxis::ltDateTime);
+    ui->plotter->xAxis->setDateTimeFormat("hh:mm:ss");
+    ui->plotter->xAxis->setAutoTickStep(false);
+    ui->plotter->xAxis->setTickStep(1);
+    ui->plotter->axisRect()->setupFullAxesBox();
 
-    connect(ui->graph->xAxis,SIGNAL(rangeChanged(QCPRange)),ui->graph->xAxis2, SLOT(setRange(QCPRange)));
-    connect(ui->graph->yAxis,SIGNAL(rangeChanged(QCPRange)),ui->graph->yAxis2, SLOT(setRange(QCPRange)));
+    connect(ui->plotter->xAxis,SIGNAL(rangeChanged(QCPRange)),ui->plotter->xAxis2, SLOT(setRange(QCPRange)));
+    connect(ui->plotter->yAxis,SIGNAL(rangeChanged(QCPRange)),ui->plotter->yAxis2, SLOT(setRange(QCPRange)));
 
-    //  Timer para ejemplo, grafica funciones seno y coseno
+    //  Timer for testing, plots sine and cosine functions
     connect(&timer,SIGNAL(timeout()),this,SLOT(sim()));
     //timer.start(16);
 
-    configurado = false;
+    config = false;
     num_signals = 0;
     num_it = 0;
 }
@@ -69,14 +69,11 @@ void MainWindow::fillParameters()
 
 void MainWindow::fillPorts()
 {
-    QString description;
-    QString manufacturer;
-    const char blankString[] = QT_TRANSLATE_NOOP("SettingsDialog", "N/A");
-
     ui->cbPort->clear();
 
-    foreach(QSerialPortInfo port, QSerialPortInfo::availablePorts()) {                       // List all available serial ports and populate ports combo box
-        ui->cbPort->addItem(port.portName());
+    // List all available serial ports and populate ports combo box
+    foreach(QSerialPortInfo info, QSerialPortInfo::availablePorts()) {
+        ui->cbPort->addItem(info.portName());
     }
 }
 
@@ -89,18 +86,18 @@ void MainWindow::dataSlot(double *value, qint8 plots)
     {
         for (qint8 i = 0; i < plots; i++){
             // add data to lines:
-            ui->graph->graph(i)->addData(key, value[i]);
+            ui->plotter->graph(i)->addData(key, value[i]);
             // remove data of lines that's outside visible range:
-            ui->graph->graph(i)->removeDataBefore(key-16);
+            ui->plotter->graph(i)->removeDataBefore(key-16);
             // rescale value (vertical) axis to fit the current data:
-            ui->graph->graph(i)->rescaleValueAxis();
+            ui->plotter->graph(i)->rescaleValueAxis();
         }
 
         lastPointKey = key;
     }
     // make key axis range scroll with the data (at a constant range size of 8):
-    ui->graph->xAxis->setRange(key+0.25, 16, Qt::AlignRight);
-    ui->graph->replot();
+    ui->plotter->xAxis->setRange(key+0.25, 16, Qt::AlignRight);
+    ui->plotter->replot();
 
     // calculate frames per second:
     static double lastFpsKey;
@@ -111,7 +108,7 @@ void MainWindow::dataSlot(double *value, qint8 plots)
     {
         ui->statusBar->showMessage(QString("%1 FPS, Total Data points: %2")
                                    .arg(frameCount/(key-lastFpsKey), 0, 'f', 0)
-                                   .arg(ui->graph->graph(0)->data()->count())
+                                   .arg(ui->plotter->graph(0)->data()->count())
                                    );
         lastFpsKey = key;
         frameCount = 0;
@@ -166,8 +163,6 @@ void MainWindow::readData()
 {
     qint32 bytes = sPort.bytesAvailable();
     QByteArray buffer(sPort.readAll());
-    QString text;
-    char buf[16];
     static char count = 0;
 
     const char *c= buffer.data();
@@ -194,34 +189,29 @@ void MainWindow::readData()
 
             QList<QByteArray> list = dataReceived->remove(count-2,2).split(' ');
 
-            if (!configurado){
+            if (!config){
                 num_signals += list.size();
                 num_it++;
                 if (num_it>=10){
                     num_signals /= num_it;
 
-                    ui->graph->clearItems();
+                    ui->plotter->clearItems();
 
-                    //  Creando los gráficos dependiendo del numero de señales recibidas
+                    //  Create graphs by take count the number of received signals
                     for (quint8 i = 0; i < num_signals; i++){
                         srand(list.at(i).toDouble() * 1000);
-                        ui->graph->addGraph();
-                        ui->graph->graph(i)->setBrush(Qt::NoBrush);
-                        ui->graph->graph(i)->setAntialiasedFill(false);
-
-                        int r,g,b;
-                        r = rand() % 128;
-                        g = rand() % 128;
-                        b = rand() % 128;
-                        ui->graph->graph(i)->setPen(QPen(QColor(r,g,b)));
+                        ui->plotter->addGraph();
+                        ui->plotter->graph(i)->setBrush(Qt::NoBrush);
+                        ui->plotter->graph(i)->setAntialiasedFill(false);
+                        ui->plotter->graph(i)->setPen(QPen(QColor(rand() % 128,rand() % 128,rand() % 128)));
                     }
 
-                    //  Inicialización del ejemplo
+                    //  Data Plotter Initialization
                     t=0;
                     qreal data[10] = {0,0,0,0,0,0,0,0,0,0};
                     dataSlot(data,num_signals);
 
-                    configurado = true;
+                    config = true;
                 }
             } else {
                 qreal data[10];
@@ -229,7 +219,7 @@ void MainWindow::readData()
                     data[i] = list.at(i).toDouble();
                 }
 
-                if (list.size() <= ui->graph->graphCount())
+                if (list.size() <= ui->plotter->graphCount())
                     dataSlot(data,list.size());
 
             }
@@ -252,17 +242,19 @@ void MainWindow::on_pbConnect_clicked()
         ui->pbConnect->setText("Desconectar");
     } else{
         disconnectTTY();
+        num_signals = 0;
+        config = false;
         ui->pbConnect->setText("Conectar");
     }
 
 }
 
-void MainWindow::on_pushButton_clicked()
+void MainWindow::on_pbDumpData_clicked()
 {
-    qDebug() << ui->graph->graph(0)->data()->size();
+    qDebug() << ui->plotter->graph(0)->data()->size();
 
-    QList<QCPData> data = ui->graph->graph(0)->data()->values();
+    QList<QCPData> data = ui->plotter->graph(0)->data()->values();
 
-    for (quint16 i=0; i < ui->graph->graph(0)->data()->size();i++)
+    for (quint16 i=0; i < ui->plotter->graph(0)->data()->size();i++)
         qDebug() << data.at(i).value;
 }

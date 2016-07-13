@@ -94,7 +94,7 @@
      </widget>
     </item>
     <item row="0" column="0">
-     <widget class="QCustomPlot" name="graph" native="true">
+     <widget class="QCustomPlot" name="plotter" native="true">
       <property name="minimumSize">
        <size>
         <width>640</width>
@@ -104,7 +104,7 @@
      </widget>
     </item>
     <item row="1" column="1">
-     <widget class="QPushButton" name="pushButton">
+     <widget class="QPushButton" name="pbDumpData">
       <property name="text">
        <string>Dump Data</string>
       </property>
