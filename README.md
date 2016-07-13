@@ -1,6 +1,7 @@
 # serialPlotter
 
-This application aims to be an simple adaptive serial port plotter, which means than you can plot up to 10 channels by sending "%f %f %f .....\r\n" from any embedded device by USART port..
+This application aims to be a simple adaptive serial port plotter, which means than you can plot up to 10 channels by sending
+"%f %f %f .....\r\n" from any embedded device by USART port..
 
 QCustomPlot was used to achieve the plot..
 http://qcustomplot.com/
