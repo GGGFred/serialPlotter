@@ -8,7 +8,7 @@ http://qcustomplot.com/
 
 This is like the plotter integrated in Arduino IDE, but I'm looking for give more power.
 
-By now the dump data it's not working yet, I want to dump data of the channels in a text file
+-- By now the dump data it's not working yet, I want to dump data of the channels in a text file
 
 I found a similar application in 
 https://developer.mbed.org/users/borislav/notebook/serial-port-plotter/

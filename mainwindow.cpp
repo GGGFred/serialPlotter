@@ -1,6 +1,9 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QTextStream>
+#include <QMessageBox>
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -251,10 +254,31 @@ void MainWindow::on_pbConnect_clicked()
 
 void MainWindow::on_pbDumpData_clicked()
 {
-    qDebug() << ui->plotter->graph(0)->data()->size();
+    quint8 graphCount = ui->plotter->graphCount();
 
-    QList<QCPData> data = ui->plotter->graph(0)->data()->values();
+    if (graphCount != 0){
+        QString filename = QFileDialog::getOpenFileName(
+                    this,
+                    tr("Select the dump data file"),
+                    QDir::homePath(),
+                    "All files (*.*);;Text File (*.txt)"
+                    );
 
-    for (quint16 i=0; i < ui->plotter->graph(0)->data()->size();i++)
-        qDebug() << data.at(i).value;
+        QFile file(filename);
+
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+            return;
+
+        QTextStream out(&file);
+
+        for (quint16 i=0; i < ui->plotter->graph(0)->data()->size();i++){
+            for (quint16 j=0; j < graphCount; j++){
+                out << ui->plotter->graph(j)->data()->values().at(i).value << "\t";
+            }
+            out << "\r\n";
+        }
+    } else {
+        QMessageBox::information(this,"Information","No data to dump");
+    }
+
 }
