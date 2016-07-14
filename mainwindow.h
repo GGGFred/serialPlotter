@@ -38,6 +38,10 @@ private slots:
     void on_pbConnect_clicked();
     void on_pbDumpData_clicked();
 
+    void on_dsbYmax_valueChanged(double arg1);
+
+    void on_dsbYmin_valueChanged(double arg1);
+
 private:
     Ui::MainWindow *ui;
     QSerialPort sPort;

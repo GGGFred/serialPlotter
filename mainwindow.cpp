@@ -25,7 +25,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->plotter->axisRect()->setupFullAxesBox();
 
     connect(ui->plotter->xAxis,SIGNAL(rangeChanged(QCPRange)),ui->plotter->xAxis2, SLOT(setRange(QCPRange)));
-    connect(ui->plotter->yAxis,SIGNAL(rangeChanged(QCPRange)),ui->plotter->yAxis2, SLOT(setRange(QCPRange)));
+//    connect(ui->plotter->yAxis,SIGNAL(rangeChanged(QCPRange)),ui->plotter->yAxis2, SLOT(setRange(QCPRange)));
+
+    //  Default Y range
+    ui->plotter->yAxis->setRange(-100,100);
+    ui->dsbYmin->setValue(-100);
+    ui->dsbYmax->setValue(100);
 
     //  Timer for testing, plots sine and cosine functions
     connect(&timer,SIGNAL(timeout()),this,SLOT(sim()));
@@ -93,7 +98,7 @@ void MainWindow::dataSlot(double *value, qint8 plots)
             // remove data of lines that's outside visible range:
             ui->plotter->graph(i)->removeDataBefore(key-16);
             // rescale value (vertical) axis to fit the current data:
-            ui->plotter->graph(i)->rescaleValueAxis();
+//            ui->plotter->graph(i)->rescaleValueAxis();
         }
 
         lastPointKey = key;
@@ -211,13 +216,13 @@ void MainWindow::readData()
 
                     //  Data Plotter Initialization
                     t=0;
-                    qreal data[10] = {0,0,0,0,0,0,0,0,0,0};
+                    qreal data[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
                     dataSlot(data,num_signals);
 
                     config = true;
                 }
             } else {
-                qreal data[10];
+                qreal data[20];
                 for (quint8 i = 0; i < list.size(); i++){
                     data[i] = list.at(i).toDouble();
                 }
@@ -257,28 +262,44 @@ void MainWindow::on_pbDumpData_clicked()
     quint8 graphCount = ui->plotter->graphCount();
 
     if (graphCount != 0){
-        QString filename = QFileDialog::getOpenFileName(
+        QString filename = QFileDialog::getSaveFileName(
                     this,
                     tr("Select the dump data file"),
                     QDir::homePath(),
                     "All files (*.*);;Text File (*.txt)"
                     );
 
-        QFile file(filename);
+        if (!filename.isEmpty()){
+            QFile file(filename);
 
-        if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
-            return;
+            if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+                return;
 
-        QTextStream out(&file);
+            QTextStream out(&file);
 
-        for (quint16 i=0; i < ui->plotter->graph(0)->data()->size();i++){
-            for (quint16 j=0; j < graphCount; j++){
-                out << ui->plotter->graph(j)->data()->values().at(i).value << "\t";
+            for (quint16 i=0; i < ui->plotter->graph(0)->data()->size();i++){
+                for (quint16 j=0; j < graphCount; j++){
+                    out << ui->plotter->graph(j)->data()->values().at(i).value << "\t";
+                }
+                out << "\r\n";
             }
-            out << "\r\n";
+
+        } else {
+            QMessageBox::information(this,"Information","No file to dump");
         }
     } else {
         QMessageBox::information(this,"Information","No data to dump");
     }
 
+}
+
+
+void MainWindow::on_dsbYmax_valueChanged(double arg1)
+{
+    ui->plotter->yAxis->setRangeUpper(arg1);
+}
+
+void MainWindow::on_dsbYmin_valueChanged(double arg1)
+{
+    ui->plotter->yAxis->setRangeLower(arg1);
 }
