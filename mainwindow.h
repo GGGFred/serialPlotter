@@ -42,6 +42,8 @@ private slots:
 
     void on_dsbYmin_valueChanged(double arg1);
 
+    void on_dsbTime_valueChanged(double arg1);
+
 private:
     Ui::MainWindow *ui;
     QSerialPort sPort;
@@ -51,6 +53,7 @@ private:
     bool config;
     quint8 num_signals;
     quint8 num_it;
+    double time;
 };
 
 #endif // MAINWINDOW_H

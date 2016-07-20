@@ -25,7 +25,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->plotter->axisRect()->setupFullAxesBox();
 
     connect(ui->plotter->xAxis,SIGNAL(rangeChanged(QCPRange)),ui->plotter->xAxis2, SLOT(setRange(QCPRange)));
-//    connect(ui->plotter->yAxis,SIGNAL(rangeChanged(QCPRange)),ui->plotter->yAxis2, SLOT(setRange(QCPRange)));
+    connect(ui->plotter->yAxis,SIGNAL(rangeChanged(QCPRange)),ui->plotter->yAxis2, SLOT(setRange(QCPRange)));
+
+    //  Default X number samples
+    ui->dsbTime->setValue(30);
+    this->time = 30;
 
     //  Default Y range
     ui->plotter->yAxis->setRange(-100,100);
@@ -93,18 +97,14 @@ void MainWindow::dataSlot(double *value, qint8 plots)
     if (key-lastPointKey > 0.01) // at most add point every 10 ms
     {
         for (qint8 i = 0; i < plots; i++){
-            // add data to lines:
-            ui->plotter->graph(i)->addData(key, value[i]);
-            // remove data of lines that's outside visible range:
-            ui->plotter->graph(i)->removeDataBefore(key-16);
-            // rescale value (vertical) axis to fit the current data:
-//            ui->plotter->graph(i)->rescaleValueAxis();
+            ui->plotter->graph(i)->addData(key, value[i]);      // add data to lines:
+            ui->plotter->graph(i)->removeDataBefore(key - this->time);// remove data of lines that's outside visible range:
         }
 
         lastPointKey = key;
     }
-    // make key axis range scroll with the data (at a constant range size of 8):
-    ui->plotter->xAxis->setRange(key+0.25, 16, Qt::AlignRight);
+    // make key axis range scroll with the data:
+    ui->plotter->xAxis->setRange(key - this->time, key);
     ui->plotter->replot();
 
     // calculate frames per second:
@@ -302,4 +302,9 @@ void MainWindow::on_dsbYmax_valueChanged(double arg1)
 void MainWindow::on_dsbYmin_valueChanged(double arg1)
 {
     ui->plotter->yAxis->setRangeLower(arg1);
+}
+
+void MainWindow::on_dsbTime_valueChanged(double arg1)
+{
+    this->time = ui->dsbTime->value();
 }
