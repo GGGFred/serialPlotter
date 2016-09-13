@@ -6,142 +6,69 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>882</width>
-    <height>591</height>
+    <width>1034</width>
+    <height>797</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Serial Plotter</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="1">
-     <widget class="QGroupBox" name="gboxPort">
-      <property name="maximumSize">
-       <size>
-        <width>300</width>
-        <height>300</height>
-       </size>
-      </property>
+    <item row="2" column="1">
+     <widget class="QGroupBox" name="gboxStatistics">
       <property name="title">
-       <string>Configuración del Puerto</string>
+       <string>Signal Statistics</string>
       </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_2">
+      <layout class="QFormLayout" name="formLayout_3">
        <item row="0" column="0">
-        <widget class="QLabel" name="labelPort">
+        <widget class="QLabel" name="labelSignal">
          <property name="text">
-          <string>Puerto</string>
+          <string>Signal</string>
          </property>
         </widget>
        </item>
        <item row="0" column="1">
-        <widget class="QComboBox" name="cbPort"/>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="labelBaud">
-         <property name="text">
-          <string>Baudios</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QComboBox" name="cbBaud"/>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="labelData">
-         <property name="text">
-          <string>Datos</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1">
-        <widget class="QComboBox" name="cbData"/>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLabel" name="labelParity">
-         <property name="text">
-          <string>Paridad</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="1">
-        <widget class="QComboBox" name="cbParity"/>
-       </item>
-       <item row="4" column="0">
-        <widget class="QLabel" name="labelStop">
-         <property name="text">
-          <string>Stop</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="1">
-        <widget class="QComboBox" name="cbStop"/>
-       </item>
-       <item row="5" column="0" colspan="2">
-        <widget class="QPushButton" name="pbConnect">
-         <property name="text">
-          <string>Conectar</string>
-         </property>
-        </widget>
+        <widget class="QSpinBox" name="sbSignal"/>
        </item>
       </layout>
      </widget>
     </item>
-    <item row="3" column="1">
-     <widget class="QPushButton" name="pbDumpData">
-      <property name="text">
-       <string>Dump Data</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="0" rowspan="4">
-     <widget class="QCustomPlot" name="plotter" native="true">
-      <property name="minimumSize">
-       <size>
-        <width>640</width>
-        <height>480</height>
-       </size>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="1" rowspan="2">
+    <item row="1" column="1">
      <widget class="QGroupBox" name="gboxPlot">
       <property name="title">
-       <string>Configuración del Graficador</string>
+       <string>Plotter Config</string>
       </property>
       <layout class="QFormLayout" name="formLayout">
        <item row="0" column="1">
         <widget class="QDoubleSpinBox" name="dsbYmax">
          <property name="minimum">
-          <double>-1000.000000000000000</double>
+          <double>-100000.000000000000000</double>
          </property>
          <property name="maximum">
-          <double>1000.000000000000000</double>
+          <double>100000.000000000000000</double>
          </property>
         </widget>
        </item>
        <item row="1" column="1">
         <widget class="QDoubleSpinBox" name="dsbYmin">
          <property name="minimum">
-          <double>-1000.000000000000000</double>
+          <double>-100000.000000000000000</double>
          </property>
          <property name="maximum">
-          <double>1000.000000000000000</double>
+          <double>100000.000000000000000</double>
          </property>
         </widget>
        </item>
        <item row="0" column="0">
-        <widget class="QLabel" name="label">
+        <widget class="QLabel" name="labelYmax">
          <property name="text">
           <string>Y Max</string>
          </property>
         </widget>
        </item>
        <item row="1" column="0">
-        <widget class="QLabel" name="label_2">
+        <widget class="QLabel" name="labelYmin">
          <property name="text">
           <string>Y Min</string>
          </property>
@@ -155,7 +82,7 @@
         </widget>
        </item>
        <item row="3" column="0">
-        <widget class="QLabel" name="label_3">
+        <widget class="QLabel" name="labelPeriod">
          <property name="text">
           <string>T Sample</string>
          </property>
@@ -174,6 +101,139 @@
       </layout>
      </widget>
     </item>
+    <item row="0" column="1">
+     <widget class="QGroupBox" name="gboxPort">
+      <property name="maximumSize">
+       <size>
+        <width>300</width>
+        <height>300</height>
+       </size>
+      </property>
+      <property name="title">
+       <string>Port Config</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="7" column="2">
+        <widget class="QCheckBox" name="chbStart">
+         <property name="text">
+          <string>Enable</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="labelPort">
+         <property name="text">
+          <string>Port</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="labelBaud">
+         <property name="text">
+          <string>Bauds</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="labelData">
+         <property name="text">
+          <string>Data</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="labelParity">
+         <property name="text">
+          <string>Parity</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="0">
+        <widget class="QLabel" name="labelStop">
+         <property name="text">
+          <string>Stop</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="0" colspan="3">
+        <widget class="Line" name="line_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="0">
+        <widget class="QLabel" name="labelStart">
+         <property name="text">
+          <string>Start</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="1">
+        <widget class="QLineEdit" name="leStart"/>
+       </item>
+       <item row="8" column="0">
+        <widget class="QLabel" name="labelEnd">
+         <property name="text">
+          <string>End</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="1">
+        <widget class="QLineEdit" name="leEnd"/>
+       </item>
+       <item row="1" column="1" colspan="2">
+        <widget class="QComboBox" name="cbPort"/>
+       </item>
+       <item row="2" column="1" colspan="2">
+        <widget class="QComboBox" name="cbBaud"/>
+       </item>
+       <item row="3" column="1" colspan="2">
+        <widget class="QComboBox" name="cbData"/>
+       </item>
+       <item row="4" column="1" colspan="2">
+        <widget class="QComboBox" name="cbParity"/>
+       </item>
+       <item row="5" column="1" colspan="2">
+        <widget class="QComboBox" name="cbStop"/>
+       </item>
+       <item row="8" column="2">
+        <widget class="QCheckBox" name="chbEnd">
+         <property name="text">
+          <string>Enable</string>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="0" colspan="3">
+        <widget class="QPushButton" name="pbConnect">
+         <property name="text">
+          <string>Connect</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="0" column="0" rowspan="4">
+     <widget class="QCustomPlot" name="plotter" native="true">
+      <property name="minimumSize">
+       <size>
+        <width>640</width>
+        <height>480</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <widget class="QPushButton" name="pbDumpData">
+      <property name="text">
+       <string>Dump Data</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">
@@ -181,8 +241,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>882</width>
-     <height>25</height>
+     <width>1034</width>
+     <height>22</height>
     </rect>
    </property>
   </widget>

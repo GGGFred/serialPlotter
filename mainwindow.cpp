@@ -3,6 +3,7 @@
 
 #include <QTextStream>
 #include <QMessageBox>
+#include <QRegExp>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -10,7 +11,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    dataReceived = new QByteArray();
+    dataReceived = new QString();
 
     fillParameters();
     fillPorts();
@@ -40,7 +41,14 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&timer,SIGNAL(timeout()),this,SLOT(sim()));
     //timer.start(16);
 
+    ui->leStart->setEnabled(false);
+    ui->leEnd->setEnabled(false);
+
+    ui->chbStart->setChecked(false);
+    ui->chbEnd->setChecked(false);
+
     config = false;
+    first = true;
     num_signals = 0;
     num_it = 0;
 }
@@ -114,12 +122,14 @@ void MainWindow::dataSlot(double *value, qint8 plots)
 
     if (key-lastFpsKey > 1) // average fps over 1 seconds
     {
-        ui->statusBar->showMessage(QString("%1 FPS, Total Data points: %2")
+        ui->statusBar->showMessage(QString("Plotting %1 signals @ %2 FPS, Total Data points: %3")
+                                   .arg(this->num_signals)
                                    .arg(frameCount/(key-lastFpsKey), 0, 'f', 0)
                                    .arg(ui->plotter->graph(0)->data()->count())
                                    );
         lastFpsKey = key;
         frameCount = 0;
+        period = (double)(1/(frameCount/(key-lastFpsKey)));
     }
 }
 
@@ -141,7 +151,7 @@ void MainWindow::connectTTY(){
 
     sPort.setPortName(dev);
 
-    if (sPort.open(QSerialPort::ReadOnly)){
+    if (sPort.open(QSerialPort::ReadWrite)){
         sPort.setBaudRate(baudrate);
         sPort.setDataBits(dataBits);
         sPort.setParity(parity);
@@ -164,46 +174,92 @@ void MainWindow::disconnectTTY(){
     disconnect(&sPort,SIGNAL(readyRead()),this,SLOT(readData()));
 }
 
-static char f1;
-static char f2;
-
 void MainWindow::readData()
 {
-    qint32 bytes = sPort.bytesAvailable();
-    QByteArray buffer(sPort.readAll());
-    static char count = 0;
+    static bool isStartCode = false;
+    static bool isEndCode = false;
+    int indexStart = -1;
+    int indexEnd = -1;
 
-    const char *c= buffer.data();
+    serialBuffer.append(sPort.readAll());
 
-    for (int i=0;i < bytes;i++){
-        dataReceived->append(*c);
-        count++;
-
-        if (*c == 0x0d){
-            f1 = true;
-        }
-        if (f1){
-            if (*c == 0x0a){
-                f2 = true;
+    if (ui->chbStart->isChecked()){
+        if (!startCode.isEmpty()){
+            indexStart = serialBuffer.lastIndexOf(startCode);
+            if (indexStart >= 0){
+                startCodeIndex = indexStart;
+                isStartCode = true;
             }
+        } else {
+            startCodeIndex = 0;
+            isStartCode = true;
+        }
+    } else {
+        startCodeIndex = 0;
+        isStartCode = true;
+    }
+
+    if (ui->chbEnd->isChecked()){
+        if (!endCode.isEmpty()){
+            indexEnd = serialBuffer.lastIndexOf(endCode);
+        } else
+            indexEnd = serialBuffer.lastIndexOf("\r\n");
+
+        if (indexEnd >= 0){
+            endCodeIndex = indexEnd;
+            isEndCode = true;
         }
 
-        if ( f1 && f2 ){
+    } else {
+        indexEnd = serialBuffer.lastIndexOf("\r\n");
+
+        if (indexEnd >= 0){
+            endCodeIndex = indexEnd;
+            isEndCode = true;
+        }
+    }
+
+    if (isStartCode && isEndCode){
+        if (startCodeIndex < endCodeIndex){
+            QByteArray subArray = serialBuffer.mid(startCodeIndex,endCodeIndex);
+            dataReceived->append(QString::fromLatin1(subArray));
+            serialBuffer.clear();
+            isStartCode = false;
+            isEndCode = false;
+        }
+    }
+
+    if (!dataReceived->isEmpty()){
+        if (first){
+            first = false;
+        }else{
             double key = QDateTime::currentDateTime().toMSecsSinceEpoch();
             static double pkey = key; double nkey = key - pkey;
 
             elapsedTime += nkey / 1000.0;
             pkey = key;
 
-            QList<QByteArray> list = dataReceived->remove(count-2,2).split(' ');
+            QRegExp regExp(QString("[") +
+                           QString::fromLatin1(startCode) +
+                           QString::fromLatin1(endCode) +
+                           QString("]"));
+
+            QList<QString> list = dataReceived->remove(regExp).split(' ');
+
+            qDebug() << list;
 
             if (!config){
                 num_signals += list.size();
                 num_it++;
-                if (num_it>=10){
-                    num_signals /= num_it;
+                if (num_it>=5){
+                    double signal = (double)num_signals / (double)num_it;
+                    num_signals = round(signal);
 
+                    //  Reset the plotter
                     ui->plotter->clearItems();
+                    ui->plotter->clearGraphs();
+
+                    ui->sbSignal->clear();
 
                     //  Create graphs by take count the number of received signals
                     for (quint8 i = 0; i < num_signals; i++){
@@ -214,10 +270,33 @@ void MainWindow::readData()
                         ui->plotter->graph(i)->setPen(QPen(QColor(rand() % 128,rand() % 128,rand() % 128)));
                     }
 
+                    ui->sbSignal->setMaximum(num_signals);
+                    ui->sbSignal->setMinimum(0);
+
                     //  Data Plotter Initialization
                     t=0;
                     qreal data[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+                    qreal maxval = INT_MIN;
+                    qreal minval = INT_MAX;
+
+                    for (quint8 i = 0; i < list.size(); i++){
+                        qreal value = list.at(i).toDouble();
+                        data[i] = value;
+
+                        if (value != 0){
+                            if (value > maxval)
+                                maxval = value;
+
+                            if (value < minval)
+                                minval = value;
+
+                        }
+                    }
+
                     dataSlot(data,num_signals);
+
+                    ui->dsbYmax->setValue(maxval+150);
+                    ui->dsbYmin->setValue(minval-150);
 
                     config = true;
                 }
@@ -231,14 +310,10 @@ void MainWindow::readData()
                     dataSlot(data,list.size());
 
             }
-
-            dataReceived->clear();
-
-            f1 = false;
-            f2 = false;
-            count = 0;
         }
-        c++;
+
+        dataReceived->clear();
+
     }
 }
 
@@ -247,12 +322,14 @@ void MainWindow::on_pbConnect_clicked()
 
     if (!sPort.isOpen()){
         connectTTY();
-        ui->pbConnect->setText("Desconectar");
+        ui->pbConnect->setText("Disconnect");
     } else{
         disconnectTTY();
         num_signals = 0;
+        num_it = 0;
         config = false;
-        ui->pbConnect->setText("Conectar");
+        first = true;
+        ui->pbConnect->setText("Connect");
     }
 
 }
@@ -260,6 +337,7 @@ void MainWindow::on_pbConnect_clicked()
 void MainWindow::on_pbDumpData_clicked()
 {
     quint8 graphCount = ui->plotter->graphCount();
+    double t = 0;
 
     if (graphCount != 0){
         QString filename = QFileDialog::getSaveFileName(
@@ -307,4 +385,32 @@ void MainWindow::on_dsbYmin_valueChanged(double arg1)
 void MainWindow::on_dsbTime_valueChanged(double arg1)
 {
     this->time = ui->dsbTime->value();
+}
+
+void MainWindow::on_chbStart_toggled(bool checked)
+{
+    ui->leStart->setEnabled(checked);
+    if (checked)
+        startCode = ui->leStart->text().toLatin1();
+    else
+        startCode.clear();
+}
+
+void MainWindow::on_chbEnd_toggled(bool checked)
+{
+    ui->leEnd->setEnabled(checked);
+    if (checked)
+        endCode = ui->leEnd->text().toLatin1();
+    else
+        endCode.clear();
+}
+
+void MainWindow::on_leStart_editingFinished()
+{
+    startCode = ui->leStart->text().toLatin1();
+}
+
+void MainWindow::on_leEnd_editingFinished()
+{
+    endCode = ui->leEnd->text().toLatin1();
 }
